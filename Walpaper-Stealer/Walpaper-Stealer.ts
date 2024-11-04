@@ -4,19 +4,19 @@ import sharp from "sharp";
 
 const sourceFolder =
   "C:\\Users\\munat\\AppData\\Local\\Packages\\Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy\\LocalState\\Assets";
-const targetFolder = join(__dirname, "images");
+const targetFolder = join(__dirname, "Wallpapers");
 
 // Ensure the target folder exists or create it
 if (!existsSync(targetFolder)) mkdirSync(targetFolder);
 
 // Function to check if an image has a resolution of 1920x1080
-const is1920x1080 = async (filePath: string): Promise<boolean> => {
+const is1920x1080 = async (filePath: string): Promise<boolean | null> => {
   try {
     const { width, height } = await sharp(filePath).metadata();
     return width === 1920 && height === 1080;
   } catch (error) {
     console.error(`Error reading metadata for ${filePath}:`, error);
-    return false;
+    return null;
   }
 };
 
@@ -28,23 +28,22 @@ const processImages = async (): Promise<void> => {
     const sourcePath = join(sourceFolder, file);
     const targetPath = join(targetFolder, `${file}.jpg`);
 
-    try {
-      // Check if the image has the correct resolution before copying
-      if (await is1920x1080(sourcePath)) {
-        // Copy the file with a .jpg extension
-        sharp(sourcePath).toFile(targetPath);
-        console.log(`File ${file} copied successfully.`);
-      } else {
-        console.log(
-          `File ${file} skipped (does not meet resolution criteria).`
-        );
+    // Check if the target file already exists
+    if (!existsSync(targetPath)) {
+      const metadata = await is1920x1080(sourcePath);
+
+      if (metadata !== null && metadata) {
+        try {
+          // Copy the file with a .jpg extension
+          await sharp(sourcePath).toFile(targetPath);
+        } catch (error) {
+          console.error(`Error copying file ${file}:`, error);
+        }
+      } else if (metadata === null) {
+        console.error(`Failed to read metadata for ${sourcePath}`);
       }
-    } catch (error) {
-      console.error(`Error processing file ${file}:`, error);
     }
   }
 };
 
-processImages()
-  .then(() => console.log("File processing completed."))
-  .catch((error) => console.error("An error occurred:", error));
+await processImages();
