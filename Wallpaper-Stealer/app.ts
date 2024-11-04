@@ -1,4 +1,6 @@
-import { readdirSync, mkdirSync, existsSync, unlinkSync } from "fs";
+// to build the
+// pkg Wallpaper-Stealer/app.ts --output app.exe --icon /favicon.ico
+import { readdirSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
 import sharp from "sharp";
 
